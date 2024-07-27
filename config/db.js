@@ -1,16 +1,29 @@
-const mongoose = require('mongoose');
+    const mongoose = require('mongoose');
 
-const connectDB = async () => {
-    try {
-        await mongoose.connect(process.env.CONNECTION_STRING, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log('MongoDB connected');
-    } catch (err) {
-        console.error(err.message);
-        process.exit(1);        
+    let instance = null;
+
+    class Database { 
+
+        constructor() {
+            if (instance === null) {   
+                this.connectDB(); 
+                instance = this;
+            }
+            return instance;
+        }
+        
+        connectDB = async () => {
+            try {
+                await mongoose.connect(process.env.CONNECTION_STRING);
+                console.log('MongoDB connected');
+            } catch (err) {
+                console.error(err.message);
+                process.exit(1);        
+            }
+        };
     }
-};
 
-module.exports = connectDB; 
+    const dbInstance = new Database();
+    Object.freeze(dbInstance);
+
+    module.exports = dbInstance; 
