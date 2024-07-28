@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
         unique: true,
-        match: [/^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/, 'Lütfen geçerli bir e-posta adresi girin.'],
+        match: [/^([\w-.]+@([\w-]+\.)+[\w-]{2,4})?$/, 'Lütfen geçerli bir e-posta adresi girin.'],
     },
     password: {
         type: String,
@@ -16,6 +16,11 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user',
+    }
 });
     
 // Şifreyi kaydetmeden önce hashleyin
