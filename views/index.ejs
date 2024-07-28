@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .form-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin: 10px;
+        }
+        #message-box {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            background-color: #f8d7da; /* Red color */
+            color: #721c24; /* Dark red */
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            display: none; /* Hidden by default */
+            z-index: 1000; /* Ensure it's on top */
+        }
+        #message-box.success {
+            background-color: #d4edda; /* Green color */
+            color: #155724; /* Dark green */
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-container">
+                <h2 class="text-center">Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="login-email">Email address</label>
+                        <input id="login-email" type="email" class="form-control" placeholder="Enter email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input id="login-password" type="password" class="form-control" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-container">
+                <h2 class="text-center">Register</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="register-email">Email address</label>
+                        <input id="register-email" type="email" class="form-control" placeholder="Enter email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <input id="register-password" type="password" class="form-control" placeholder="Password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="message-box"></div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    function showMessage(message, isSuccess = true) {
+        const messageBox = document.getElementById('message-box');
+        messageBox.textContent = message;
+        messageBox.className = 'success'; // Default success
+        if (!isSuccess) {
+            messageBox.classList.remove('success');
+            messageBox.style.backgroundColor = '#f8d7da'; // Red color
+            messageBox.style.color = '#721c24'; // Dark red
+        } else {
+            messageBox.style.backgroundColor = '#d4edda'; // Green color
+            messageBox.style.color = '#155724'; // Dark green
+        }
+        messageBox.style.display = 'block';
+        setTimeout(() => messageBox.style.display = 'none', 5000); // Hide after 5 seconds
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        fetch('/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.data && response.data.success) {
+                showMessage('Login successful');
+            } else {
+                showMessage((response.error.description || 'Unknown error occurred'), false);
+                passwordInput.value = ``;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('An error occurred', false);
+        });
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const emailInput = document.getElementById('register-email');
+        const passwordInput = document.getElementById('register-password');
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        fetch('/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        })
+        .then(response => response.json())
+        .then(response => {
+            if (response.data && response.data.success) {
+                showMessage('Registration successful');
+                emailInput.value = '';
+                passwordInput.value = '';
+            } else {
+                showMessage((response.error.description || 'Unknown error occurred'), false);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('An error occurred', false);
+        });
+    });
+</script>
+</body>
+</html>
