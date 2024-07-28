@@ -9,11 +9,19 @@ const Response = require('../lib/Response');
 const CustomError = require('../lib/CustomError');
 const Enum = require('../config/Enum');
 
+router.get('/', function(req, res) {
+    res.render(`index`);
+});
+
 router.post(`/register`, async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // email / password kontrolleri gelecek
+        const hasUser = await User.findOne({email});
+
+        if (hasUser) throw new CustomError(Enum.HTTP_CODES.CONFLICT, `Kullanıcı zaten var`,`Bu e-posta adresine sahip bir kullanıcı zaten mevcut.`);
+
+        // password kontrolleri gelecek
 
         const user = await User.create({ email, password });
 
@@ -53,7 +61,7 @@ router.post(`/login`, async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Giriş hatası!", "Email veya şifre yanlış.");
 
-        if (!user.isVerified) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Doğrulama hatası!", "Lütfen hesabınızı email üzerinden doğrulayın.");
+        if (!user.isVerified) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Doğrulama hatası!", "Lütfen hesabınızı doğrulayın.");
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
