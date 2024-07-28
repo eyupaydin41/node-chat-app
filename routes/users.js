@@ -1,12 +1,12 @@
 var express = require('express');
 var router = express.Router();
 var User = require(`../models/User`);
+const { authenticateUser, authorizeRoles } = require('../lib/auth');
 const Response = require('../lib/Response');
-const bcrypt = require('bcryptjs');
 const { HTTP_CODES } = require('../config/Enum');
 const CustomError = require('../lib/CustomError');
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateUser , async (req, res) => {
     try {
         let users = await User.find({});
 
@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get(`/:id`, async (req,res) => {
+router.get(`/:id`, authenticateUser, async (req,res) => {
     try {
         let user = await User.findById(req.params.id)
 
@@ -34,7 +34,7 @@ router.get(`/:id`, async (req,res) => {
 
 
 
-router.delete(`/:id`, async (req,res) => {
+router.delete(`/:id`, authenticateUser, authorizeRoles(`admin`) ,async (req,res) => {
     try {
         let user = await User.findById(req.params.id)
 
