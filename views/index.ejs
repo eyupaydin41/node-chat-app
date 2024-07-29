@@ -122,8 +122,10 @@
         })
         .then(response => response.json())
         .then(response => {
-            if (response.data && response.data.success) {
+            if (response.data.token) {
+
                 showMessage('Login successful');
+                location.assign(`/chat`);
             } else {
                 showMessage((response.error.description || 'Unknown error occurred'), false);
                 passwordInput.value = ``;
