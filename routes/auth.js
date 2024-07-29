@@ -27,6 +27,8 @@ router.post(`/register`, async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
+        res.cookie('jwt', token );
+
         const transporter = nodemailer.createTransport({
             service: 'Gmail',
             auth: {
@@ -64,6 +66,8 @@ router.post(`/login`, async (req, res) => {
         if (!user.isVerified) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Doğrulama hatası!", "Lütfen hesabınızı doğrulayın.");
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.cookie('jwt', token);
 
         let userData = {
             _id: user._id,
