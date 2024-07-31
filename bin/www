@@ -47,12 +47,16 @@ io.use((socket, next) => {
     if (err) {
       return next(new Error('Authentication error: Invalid token'));
     }
-    socket.user = decoded; 
+    socket.user = decoded;
     next();
   });
 });
 
 io.on('connection', (socket) => {
+
+  socket.emit('user connected', {
+    userId: socket.user.id
+  });
 
 
   socket.on('chat message', async (msg) => {
@@ -67,9 +71,9 @@ io.on('connection', (socket) => {
 
       io.emit('chat message', {
         userId: socket.user.id,
-        userName: user.email, 
+        userName: user.email.split(`@`)[0],
         content: msg,
-        timestamp: message.timestamp 
+        timestamp: message.timestamp
       });
     } catch (err) {
       console.error('Error saving message:', err);
