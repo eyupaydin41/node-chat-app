@@ -1,0 +1,203 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #1A3636;
+    height: 100%;
+    width: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.wrapper {
+    display: flex;
+    height: 100vh;
+    /* viewport height */
+    width: 100vw;
+    /* viewport width */
+}
+
+.message-channels {
+    background-color: #f9f9f9;
+    border-right: 1px solid #ccc;
+    height: 100%;
+    width: 20%;
+    overflow-y: auto;
+}
+
+.container2 {
+    background-color: #f9f9f9;
+    padding: 0;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: width 0.3s ease;
+    width: 100%;
+    /* Tam genişliği kapsaması için */
+    height: 100vh;
+}
+
+header {
+    background-color: #40534C;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#toggle-btn {
+    background-color: #D6BD98;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#toggle-btn:hover {
+    background-color: #B4A583;
+}
+
+.main-content {
+    display: flex;
+    flex-grow: 1;
+}
+
+#messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+    height: calc(100vh - 160px);
+    /* Başlık ve giriş alanının yüksekliğine göre ayarla */
+    box-sizing: border-box;
+}
+
+#messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+#messages::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 4px;
+}
+
+#messages::-webkit-scrollbar-thumb:hover {
+    background-color: #888;
+}
+
+#messages::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.message-item {
+    border-radius: 20px;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: inline-block;
+    max-width: 70%;
+    clear: both;
+    position: relative;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.message-left {
+    background-color: #D6BD98;
+    float: left;
+    margin-left: 10px;
+}
+
+.message-right {
+    background-color: #40534C;
+    color: white;
+    float: right;
+    margin-right: 10px;
+}
+
+.message-header {
+    font-weight: bold;
+}
+
+.message-content {
+    margin-top: 5px;
+    margin-bottom: 15px;
+    white-space: pre-wrap;
+}
+
+.message-timestamp {
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    right: 10px;
+    bottom: 5px;
+}
+
+.message-right .message-timestamp {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.online-users {
+    background-color: #f9f9f9;
+    border-left: 1px solid #ccc;
+    height: 100%;
+    width: 20%;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.online-user {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #e0e0e0;
+    color: #333;
+    transition: background-color 0.3s, color 0.3s;
+    display: flex;
+    align-items: center;
+}
+
+.online-user:hover {
+    background-color: #D6BD98;
+    color: white;
+}
+
+.online-user:last-child {
+    margin-bottom: 0;
+}
+
+#input-group {
+    display: flex;
+    background-color: #f9f9f9;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+    padding: 10px;
+    z-index: 1;
+}
+
+#input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#send-btn {
+    background-color: #40534C;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
+}
+
+#send-btn:hover {
+    background-color: #B4A583;
+}
