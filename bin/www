@@ -69,12 +69,23 @@ io.on('connection', async (socket) => {
     userId: socket.user.id
   });
 
+  socket.on('join channel', (channelId) => {
+    socket.currentChannelId = channelId;
+  });
+
 
   socket.on('chat message', async (msg) => {
+
+    if (!socket.currentChannelId) {
+      socket.emit('error', { message: 'No channel selected.' });
+      return;
+    }
+
     try {
       const message = new Message({
         user: socket.user.id,
         content: msg,
+        channelId: socket.currentChannelId,
       });
       await message.save();
 
@@ -83,6 +94,7 @@ io.on('connection', async (socket) => {
         userId: socket.user.id,
         userName: user.email.split(`@`)[0],
         content: msg,
+        channelId: socket.currentChannelId,
         timestamp: message.timestamp
       });
     } catch (err) {
