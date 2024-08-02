@@ -11,11 +11,21 @@
 
 <body>
   <div class="wrapper">
-    <div id="message-channels" class="message-channels"></div>
+    <div id="message-channels" class="message-channels">
+      <header class="channels-header">
+        <h2>Sohbetler</h2>
+        <button id="create-channel-btn" class="btn">
+          <img src="../images/addChannel.png" alt="Add Channel" />
+        </button>
+      </header>
+      <ul id="channels-list" class="channel-list"></ul>
+    </div>
     <div class="container2">
       <header>
         <h2>Mesajlaşma Odası</h2>
-        <button id="toggle-btn" class="btn btn-primary">Online Kullanıcılar</button>
+        <button id="toggle-btn" class="btn">
+          <img src="../images/user.png" alt="User" />
+        </button>
       </header>
       <div class="main-content">
         <div id="messages"></div>
@@ -28,6 +38,41 @@
     </div>
   </div>
 
+  <!-- Kanal oluşturma modalı -->
+  <div class="modal fade" id="createChannelModal" tabindex="-1" aria-labelledby="createChannelModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createChannelModalLabel">Yeni Kanal Oluştur</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="create-channel-form">
+            <div class="mb-3">
+              <label for="channel-name" class="form-label">Kanal Adı</label>
+              <input type="text" class="form-control" id="channel-name" required>
+            </div>
+            <div class="mb-3">
+              <label for="channel-description" class="form-label">Açıklama</label>
+              <textarea class="form-control" id="channel-description"></textarea>
+            </div>
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="channel-public" checked>
+              <label class="form-check-label" for="channel-public">Public</label>
+            </div>
+            <div class="mb-3" id="channel-users-div" style="display: none;">
+              <label for="channel-users" class="form-label">Kullanıcılar (virgülle ayırarak yazınız)</label>
+              <input type="text" class="form-control" id="channel-users">
+            </div>
+            <button type="submit" class="btn btn-primary">Oluştur</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const messagesDiv = document.getElementById('messages');
@@ -37,8 +82,14 @@
     const toggleBtn = document.getElementById('toggle-btn');
     const wrapper = document.querySelector('.wrapper');
     const container = document.querySelector('.container2');
+    const channelsList = document.getElementById('channels-list');
+    const createChannelBtn = document.getElementById('create-channel-btn');
+    const createChannelForm = document.getElementById('create-channel-form');
+    const channelPublicCheckbox = document.getElementById('channel-public');
+    const channelUsersDiv = document.getElementById('channel-users-div');
 
     let currentUserId;
+    let currentChannelId;
 
     function scrollToBottom() {
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -52,9 +103,9 @@
       }
     });
 
-    // Sayfa yüklendiğinde online-users div’inin başlangıçta görünür olup olmadığını kontrol et
     document.addEventListener('DOMContentLoaded', function () {
-      onlineUsersDiv.style.display = 'block'; // varsayılan olarak görünür
+      onlineUsersDiv.style.display = 'block';
+      fetchChannels();
     });
 
     function getCookie(name) {
@@ -69,7 +120,7 @@
     if (!token) {
       console.error('JWT token not found');
       alert('Please log in');
-      location.assign(`/`);
+      location.assign(`/auth`);
     }
 
     const socket = io({
@@ -81,29 +132,46 @@
 
     socket.on('user connected', (data) => {
       currentUserId = data.userId;
-      fetchMessages(); // user connected olayından sonra fetchMessages çağırılıyor
+      fetchChannels();
     });
 
     socket.on('connect_error', (err) => {
       console.error('Socket connection error:', err);
       alert('Lütfen giriş yapınız.');
-      location.assign(`/`);
+      location.assign(`/auth`);
     });
 
     sendBtn.addEventListener('click', function () {
-      if (input.value) {
+      if (input.value && currentChannelId) {
         socket.emit('chat message', input.value);
         input.value = '';
       }
     });
 
     socket.on('chat message', function (msg) {
+      if (msg.channelId === currentChannelId) {
+        displayMessage(msg);
+      }
+    });
+
+    socket.on('online users', (users) => {
+      onlineUsersDiv.innerHTML = '';
+      users.forEach(user => {
+        const userItem = document.createElement('div');
+        userItem.className = 'online-user';
+        userItem.textContent = user.email.split('@')[0];
+        onlineUsersDiv.appendChild(userItem);
+      });
+    });
+
+    function displayMessage(msg) {
+
       const item = document.createElement('div');
       item.className = 'message-item';
 
       const header = document.createElement('div');
       header.className = 'message-header';
-      header.innerHTML = `<span>${msg.userName}</span>`;
+      header.innerHTML = `<span>${msg.userName || msg.user.email.split("@")[0]}</span>`;
 
       const content = document.createElement('div');
       content.className = 'message-content';
@@ -117,66 +185,36 @@
       item.appendChild(content);
       item.appendChild(timestamp);
 
-      if (msg.userId === currentUserId) {
+      if ((msg.userId || msg.user._id) === currentUserId) {
         item.classList.add('message-right');
       } else {
         item.classList.add('message-left');
       }
 
       messagesDiv.appendChild(item);
-
       scrollToBottom();
-    });
+    }
 
-    async function fetchMessages() {
+    async function fetchMessages(channelId) {
       if (!currentUserId) {
         console.error('currentUserId is not set');
         return;
       }
 
       try {
-        const response = await fetch('/chat/messages', {
+        const response = await fetch(`/chat/messages/${channelId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
+
         if (response.ok) {
           const responseData = await response.json();
-          responseData.data.forEach(msg => {
-            const item = document.createElement('div');
-            item.className = 'message-item';
-
-            console.log(msg);
-
-            const header = document.createElement('div');
-            header.className = 'message-header';
-            header.innerHTML = `<span>${msg.user.email.split(`@`)[0]}</span>`;
-
-            const content = document.createElement('div');
-            content.className = 'message-content';
-            content.textContent = msg.content;
-
-            const timestamp = document.createElement('div');
-            timestamp.className = 'message-timestamp';
-            timestamp.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            item.appendChild(header);
-            item.appendChild(content);
-            item.appendChild(timestamp);
-
-            if (msg.user._id === currentUserId) {
-              item.classList.add('message-right');
-            } else {
-              item.classList.add('message-left');
-            }
-
-            messagesDiv.appendChild(item);
-          });
-
-          scrollToBottom();
+          messagesDiv.innerHTML = '';
+          responseData.data.forEach(displayMessage);
         } else if (response.status === 401) {
           alert('Lütfen tekrar giriş yapınız.');
-          location.assign(`/`);
+          location.assign(`/auth`);
         } else {
           console.error('Failed to fetch messages:', response.status);
         }
@@ -185,16 +223,94 @@
       }
     }
 
-    socket.on('online users', function (users) {
-      onlineUsersDiv.innerHTML = '';
-      users.forEach(function (user) {
-        console.log("Gelen user: " + user.email);
-        const userDiv = document.createElement('div');
-        userDiv.className = 'online-user';
-        userDiv.textContent = user.email.split(`@`)[0];
-        console.log("Yüklenen user id: " + user._id);
-        onlineUsersDiv.appendChild(userDiv);
-      });
+    async function fetchChannels() {
+      try {
+        const response = await fetch('/chat/channels', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const responseData = await response.json();
+          channelsList.innerHTML = '';
+          responseData.data.forEach(channel => {
+            const channelItem = document.createElement('li');
+            channelItem.className = 'list-group-item';
+            channelItem.textContent = channel.name;
+            channelItem.dataset.channelId = channel._id;
+            channelItem.addEventListener('click', () => {
+              currentChannelId = channel._id;
+              socket.emit('join channel', channel._id);
+              fetchMessages(channel._id);
+            });
+            channelsList.appendChild(channelItem);
+          });
+        } else if (response.status) {
+          alert('Lütfen tekrar giriş yapınız.');
+          location.assign(`/auth`);
+        } else {
+          console.error('Failed to fetch channels:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching channels:', error);
+      }
+    }
+
+    createChannelBtn.addEventListener('click', function () {
+      const createChannelModal = new bootstrap.Modal(document.getElementById('createChannelModal'));
+      createChannelModal.show();
+    });
+
+    createChannelForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const channelName = document.getElementById('channel-name').value;
+      const channelDescription = document.getElementById('channel-description').value;
+      const channelPublic = document.getElementById('channel-public').checked;
+      const channelUsers = document.getElementById('channel-users').value.split(',').map(user => user.trim());
+
+      const newChannel = {
+        name: channelName,
+        description: channelDescription,
+        public: channelPublic,
+        users: channelPublic ? [] : channelUsers
+      };
+
+      try {
+        const response = await fetch('/chat/channels', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(newChannel)
+        });
+
+        if (response.ok) {
+          const createdChannel = await response.json();
+          const channelItem = document.createElement('li');
+          channelItem.className = 'list-group-item';
+          channelItem.textContent = createdChannel.name;
+          channelItem.dataset.channelId = createdChannel._id;
+          channelItem.addEventListener('click', () => {
+            currentChannelId = createdChannel._id;
+            fetchMessages(createdChannel._id);
+          });
+          channelsList.appendChild(channelItem);
+
+          createChannelForm.reset();
+          const createChannelModal = bootstrap.Modal.getInstance(document.getElementById('createChannelModal'));
+          createChannelModal.hide();
+        } else {
+          console.error('Failed to create channel:', response.status);
+        }
+      } catch (error) {
+        console.error('Error creating channel:', error);
+      }
+    });
+
+    channelPublicCheckbox.addEventListener('change', function () {
+      channelUsersDiv.style.display = channelPublicCheckbox.checked ? 'none' : 'block';
     });
 
   </script>
